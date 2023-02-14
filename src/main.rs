@@ -5,31 +5,34 @@ use std::ops::Not;
 const SIZE: i32 = 10;
 
 fn main() {
-    let mut app = App::build();
+    let mut app = App::new();
     app.insert_resource(ClearColor(Color::GRAY))
         .insert_resource(WindowDescriptor {
             title: "Pathfinding".to_string(),
             width: 800.,
             height: 600.,
-            vsync: false,
             resizable: false,
             ..Default::default()
         })
         .add_event::<ToggleBlockEvent>()
         .init_resource::<Materials>()
         .add_plugins(DefaultPlugins)
-        .add_startup_system(setup.system())
-        .add_system_to_stage(CoreStage::PostUpdate, grid_to_transform.system())
-        .add_system(mouse_click_system.system())
-        .add_system(toggle_block.system())
-        .add_system(pathfinding.system());
-    #[cfg(target_arch = "wasm32")]
-    app.add_plugin(bevy_webgl2::WebGL2Plugin);
+        .add_startup_system(setup)
+        .add_system_to_stage(CoreStage::PostUpdate, grid_to_transform)
+        .add_system(mouse_click_system)
+        .add_system(toggle_block)
+        .add_system(pathfinding);
+
     app.run();
 }
 
+#[derive(Component)]
 struct Start;
+
+#[derive(Component)]
 struct End;
+
+#[derive(Component)]
 struct Block;
 
 #[derive(Default)]
@@ -38,7 +41,7 @@ struct Materials {
     block: Option<Handle<ColorMaterial>>,
 }
 
-#[derive(Eq, PartialEq, Copy, Clone, Hash, Debug)]
+#[derive(Component, Eq, PartialEq, Copy, Clone, Hash, Debug)]
 struct Pos {
     x: i32,
     y: i32,
@@ -68,6 +71,7 @@ struct ToggleBlockEvent {
     pos: Pos,
 }
 
+#[derive(Component)]
 struct Path;
 
 fn setup(
@@ -78,12 +82,15 @@ fn setup(
     my_materials.path = Some(materials.add(Color::rgb(1., 1., 1.).into()));
     my_materials.block = Some(materials.add(Color::rgb(0.5, 0.5, 1.0).into()));
 
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    commands.spawn_bundle(Camera2dBundle::default());
 
     commands
         .spawn_bundle(SpriteBundle {
-            sprite: Sprite::new(Vec2::new(35., 35.)),
-            material: materials.add(Color::rgb(1., 1., 1.).into()),
+            sprite: Sprite {
+                custom_size: Some(Vec2::new(1.0, 1.0)),
+                color: Color::hsl(0.1058, 0.1686, 0.3),
+                ..Default::default()
+            },
             ..Default::default()
         })
         .insert(Pos::try_new(0, 0).unwrap())
@@ -91,22 +98,28 @@ fn setup(
 
     commands
         .spawn_bundle(SpriteBundle {
-            sprite: Sprite::new(Vec2::new(35., 35.)),
-            material: materials.add(Color::rgb(1., 1., 1.).into()),
+            sprite: Sprite {
+                custom_size: Some(Vec2::new(35.0, 35.0)),
+                color: Color::hsl(1., 1., 1.),
+                ..Default::default()
+            },
             ..Default::default()
         })
         .insert(Pos::try_new(9, 9).unwrap())
         .insert(End);
 
     commands.spawn_bundle(SpriteBundle {
-        sprite: Sprite::new(Vec2::new(400., 400.)),
-        material: materials.add(Color::rgb(0., 0., 0.).into()),
+        sprite: Sprite {
+            custom_size: Some(Vec2::new(400.0, 400.0)),
+            color: Color::hsl(0., 0., 0.),
+            ..Default::default()
+        },
         transform: Transform::from_xyz(-20., -20., 1.),
         ..Default::default()
     });
 }
 
-fn grid_to_transform(query: Query<(&Pos, &mut Transform)>) {
+fn grid_to_transform(mut query: Query<(&Pos, &mut Transform)>) {
     query.for_each_mut(|(pos, mut transform): (&Pos, Mut<Transform>)| {
         transform.translation.x = ((pos.x as i32 * 40) - 200) as f32;
         transform.translation.y = ((pos.y as i32 * 40) - 200) as f32;
@@ -137,7 +150,6 @@ fn toggle_block(
     mut my_events: EventReader<ToggleBlockEvent>,
     blocks: Query<(Entity, &Pos), With<Block>>,
     mut commands: Commands,
-    materials: Res<Materials>,
 ) {
     for event in my_events.iter() {
         let event: &ToggleBlockEvent = event;
@@ -148,8 +160,11 @@ fn toggle_block(
             None => {
                 commands
                     .spawn_bundle(SpriteBundle {
-                        sprite: Sprite::new(Vec2::new(35., 35.)),
-                        material: materials.block.clone().unwrap(),
+                        sprite: Sprite {
+                            custom_size: Some(Vec2::new(35.0, 35.0)),
+                            color: Color::hsl(0.1058, 0.1686, 1.),
+                            ..Default::default()
+                        },
                         ..Default::default()
                     })
                     .insert(event.pos)
@@ -170,10 +185,9 @@ fn pathfinding(
     blocks: Query<&Pos, With<Block>>,
     paths: Query<Entity, With<Path>>,
     mut commands: Commands,
-    materials: Res<Materials>,
 ) {
-    let start = start.single().expect("No start block");
-    let end = end.single().expect("No end block");
+    let start = start.get_single().expect("No start block");
+    let end = end.get_single().expect("No end block");
 
     let blocks = blocks.iter().collect::<Vec<_>>();
 
@@ -197,8 +211,11 @@ fn pathfinding(
         for pos in path {
             commands
                 .spawn_bundle(SpriteBundle {
-                    sprite: Sprite::new(Vec2::new(5., 5.)),
-                    material: materials.path.clone().unwrap(),
+                    sprite: Sprite {
+                        custom_size: Some(Vec2::new(5.0, 5.0)),
+                        color: Color::hsl(0.1058, 0.1686, 1.),
+                        ..Default::default()
+                    },
                     ..Default::default()
                 })
                 .insert(pos)
