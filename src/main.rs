@@ -32,7 +32,6 @@ fn main() {
         .add_plugin(LdtkPlugin)
         .add_startup_system(setup)
         .insert_resource(LevelSelection::Index(0))
-        .add_system_to_stage(CoreStage::PostUpdate, grid_to_transform)
         .register_ldtk_int_cell::<components::WallBundle>(1)
         .register_ldtk_entity::<components::PlayerBundle>("Player")
         .register_ldtk_entity::<components::ChestBundle>("Chest")
@@ -45,11 +44,8 @@ fn main() {
 }
 
 struct ToggleBlockEvent {
-    pos: Pos,
+    translation: Vec3,
 }
-
-#[derive(Component)]
-struct Path;
 
 const YELLOW: Color = Color::hsl(53.0, 0.99, 0.50);
 const PALE: Color = Color::hsl(237.0, 0.45, 0.9);
@@ -58,67 +54,38 @@ const WHITE: Color = Color::hsl(0., 0., 1.);
 const BLACK: Color = Color::hsl(0., 0., 0.);
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn_bundle(Camera2dBundle::default());
-
-    // commands
-    //     .spawn_bundle(SpriteBundle {
-    //         sprite: Sprite {
-    //             custom_size: Some(Vec2::new(GRID_BLOCK_SIZE as f32, GRID_BLOCK_SIZE as f32)),
-    //             color: WHITE,
-    //             ..Default::default()
-    //         },
-    //         ..Default::default()
-    //     })
-    //     .insert(Pos::try_new(1, 1).unwrap())
-    //     .insert(Player);
-
-    // commands
-    //     .spawn_bundle(SpriteBundle {
-    //         sprite: Sprite {
-    //             custom_size: Some(Vec2::new(GRID_BLOCK_SIZE as f32, GRID_BLOCK_SIZE as f32)),
-    //             color: YELLOW,
-    //             ..Default::default()
-    //         },
-    //         ..Default::default()
-    //     })
-    //     .insert(Pos::try_new(8, 8).unwrap())
-    //     .insert(Chest);
-
-    // commands.spawn_bundle(SpriteBundle {
-    //     sprite: Sprite {
-    //         custom_size: Some(Vec2::new(WINDOW_WIDTH as f32, WINDOW_HEIGHT as f32)),
-    //         color: BLACK,
-    //         ..Default::default()
-    //     },
-    //     ..Default::default()
-    // });
-
-    let ldtk_handle = asset_server.load("basic_map.ldtk");
-    commands.spawn_bundle(LdtkWorldBundle {
-        ldtk_handle,
+    commands.spawn_bundle(Camera2dBundle {
         transform: Transform {
-            translation: Vec3::new(-(WINDOW_WIDTH / 2) as f32, -(WINDOW_HEIGHT / 2) as f32, 1.),
+            translation: Vec3::new((WINDOW_WIDTH / 2) as f32, (WINDOW_HEIGHT / 2) as f32, 3.),
             ..Default::default()
         },
         ..Default::default()
     });
-}
 
-fn grid_to_transform(mut query: Query<(&Pos, &mut Transform)>) {
-    query.for_each_mut(|(pos, mut transform): (&Pos, Mut<Transform>)| {
-        transform.translation.x =
-            ((pos.x as i32 * GRID_BLOCK_SIZE) - (WINDOW_WIDTH + GRID_BLOCK_SIZE) / 2) as f32;
-        transform.translation.y =
-            ((pos.y as i32 * GRID_BLOCK_SIZE) - (WINDOW_HEIGHT + GRID_BLOCK_SIZE) / 2) as f32;
-        transform.translation.z = 2.;
+    let ldtk_handle = asset_server.load("basic_map.ldtk");
+    commands.spawn_bundle(LdtkWorldBundle {
+        ldtk_handle,
+        ..Default::default()
     });
 }
 
-fn translation_to_grid_pos(translation: Vec3) -> Option<Pos> {
+fn grid_to_translation(grid_pos: GridPosition) -> Vec3 {
+    Vec3::new(
+        (grid_pos.x as i32 * GRID_BLOCK_SIZE - GRID_BLOCK_SIZE / 2) as f32,
+        (grid_pos.y as i32 * GRID_BLOCK_SIZE - GRID_BLOCK_SIZE / 2) as f32,
+        2.,
+    )
+}
+
+fn translation_to_grid_pos(translation: Vec3) -> Option<GridPosition> {
     let x = (translation.x as i32) / GRID_BLOCK_SIZE + 1;
     let y = (translation.y as i32) / GRID_BLOCK_SIZE + 1;
 
-    Pos::try_new(x, y)
+    GridPosition::try_new(x, y)
+}
+
+fn snap_to_grid(translation: Vec3) -> Vec3 {
+    grid_to_translation(translation_to_grid_pos(translation).unwrap())
 }
 
 fn mouse_click_system(
@@ -129,12 +96,9 @@ fn mouse_click_system(
     if mouse_button_input.just_pressed(MouseButton::Left) {
         if let Some(window) = windows.get_primary() {
             if let Some(cursor_pos) = window.cursor_position() {
-                let x = (cursor_pos.x as i32) / GRID_BLOCK_SIZE + 1;
-                let y = (cursor_pos.y as i32) / GRID_BLOCK_SIZE + 1;
-
-                if let Some(pos) = Pos::try_new(x as i32, y as i32) {
-                    my_events.send(ToggleBlockEvent { pos });
-                }
+                my_events.send(ToggleBlockEvent {
+                    translation: snap_to_grid(Vec3::new(cursor_pos.x, cursor_pos.y, 1.)),
+                });
             }
         }
     }
@@ -142,29 +106,36 @@ fn mouse_click_system(
 
 fn toggle_block(
     mut my_events: EventReader<ToggleBlockEvent>,
-    blocks: Query<(Entity, &Pos), With<Wall>>,
+    blocks: Query<(Entity, &Transform), With<Wall>>,
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
+    let texture_handle = asset_server.load("wall.PNG");
+    let texture_atlas = TextureAtlas::from_grid(
+        texture_handle,
+        Vec2::new(GRID_BLOCK_SIZE as f32, GRID_BLOCK_SIZE as f32),
+        8,
+        1,
+    );
+    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+
     for event in my_events.iter() {
         let event: &ToggleBlockEvent = event;
-        if event.pos.min() || event.pos.max() {
-            continue;
-        }
-        match blocks.iter().find(|(_, pos)| pos == &&event.pos) {
+        match blocks.iter().find(|(_, transform)| {
+            translation_to_grid_pos(transform.translation).unwrap()
+                == translation_to_grid_pos(event.translation).unwrap()
+        }) {
             None => {
                 commands
-                    .spawn_bundle(SpriteBundle {
-                        sprite: Sprite {
-                            custom_size: Some(Vec2::new(
-                                GRID_BLOCK_SIZE as f32,
-                                GRID_BLOCK_SIZE as f32,
-                            )),
-                            color: PALE,
+                    .spawn_bundle(SpriteSheetBundle {
+                        texture_atlas: texture_atlas_handle.clone(),
+                        transform: Transform {
+                            translation: event.translation,
                             ..Default::default()
                         },
                         ..Default::default()
                     })
-                    .insert(event.pos)
                     .insert(Wall);
             }
             Some((entity, _)) => {
@@ -201,11 +172,11 @@ fn pathfinding(
     let result = bfs(
         &start_grid_pos,
         |p| {
-            let &Pos { x, y } = p;
+            let &GridPosition { x, y } = p;
             vec![(x, y - 1), (x, y + 1), (x - 1, y), (x + 1, y)]
                 .into_iter()
-                .filter_map(|(x, y)| Pos::try_new(x, y))
-                .filter(|pos| blocks.contains(&pos).not())
+                .filter_map(|(x, y)| GridPosition::try_new(x, y))
+                .filter(|grid_pos| blocks.contains(&grid_pos).not())
         },
         |p| *p == end_grid_pos,
     );
@@ -215,17 +186,20 @@ fn pathfinding(
     }
 
     if let Some(path) = result {
-        for pos in path {
+        for grid_pos in path {
             commands
                 .spawn_bundle(SpriteBundle {
                     sprite: Sprite {
-                        custom_size: Some(Vec2::new(5.0, 5.0)),
+                        custom_size: Some(Vec2::new(4.0, 4.0)),
                         color: BLUE,
+                        ..Default::default()
+                    },
+                    transform: Transform {
+                        translation: grid_to_translation(grid_pos),
                         ..Default::default()
                     },
                     ..Default::default()
                 })
-                .insert(pos)
                 .insert(Path);
         }
     }
