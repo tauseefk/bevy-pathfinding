@@ -8,12 +8,12 @@ mod prelude {
     pub use pathfinding::prelude::*;
 
     pub use crate::components::*;
-}
 
-const GRID_SIZE: i32 = 8;
-const GRID_BLOCK_SIZE: i32 = 32;
-const WINDOW_HEIGHT: i32 = 256;
-const WINDOW_WIDTH: i32 = 256;
+    pub const GRID_SIZE: i32 = 8;
+    pub const GRID_BLOCK_SIZE: i32 = 32;
+    pub const WINDOW_HEIGHT: i32 = 256;
+    pub const WINDOW_WIDTH: i32 = 256;
+}
 
 use prelude::*;
 
@@ -44,32 +44,6 @@ fn main() {
     app.run();
 }
 
-#[derive(Component, Eq, PartialEq, Copy, Clone, Hash, Debug)]
-struct Pos {
-    x: i32,
-    y: i32,
-}
-impl Pos {
-    const fn try_new(x: i32, y: i32) -> Option<Self> {
-        if x <= 0 || y <= 0 || x > GRID_SIZE as i32 || y > GRID_SIZE as i32 {
-            None
-        } else {
-            Some(Self {
-                x: x as i32,
-                y: y as i32,
-            })
-        }
-    }
-
-    const fn min(self) -> bool {
-        self.x == 1 && self.y == 1
-    }
-
-    const fn max(self) -> bool {
-        self.x == GRID_SIZE && self.y == GRID_SIZE
-    }
-}
-
 struct ToggleBlockEvent {
     pos: Pos,
 }
@@ -86,44 +60,48 @@ const BLACK: Color = Color::hsl(0., 0., 0.);
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn_bundle(Camera2dBundle::default());
 
-    commands
-        .spawn_bundle(SpriteBundle {
-            sprite: Sprite {
-                custom_size: Some(Vec2::new(GRID_BLOCK_SIZE as f32, GRID_BLOCK_SIZE as f32)),
-                color: WHITE,
-                ..Default::default()
-            },
-            ..Default::default()
-        })
-        .insert(Pos::try_new(1, 1).unwrap())
-        .insert(Player);
+    // commands
+    //     .spawn_bundle(SpriteBundle {
+    //         sprite: Sprite {
+    //             custom_size: Some(Vec2::new(GRID_BLOCK_SIZE as f32, GRID_BLOCK_SIZE as f32)),
+    //             color: WHITE,
+    //             ..Default::default()
+    //         },
+    //         ..Default::default()
+    //     })
+    //     .insert(Pos::try_new(1, 1).unwrap())
+    //     .insert(Player);
 
-    commands
-        .spawn_bundle(SpriteBundle {
-            sprite: Sprite {
-                custom_size: Some(Vec2::new(GRID_BLOCK_SIZE as f32, GRID_BLOCK_SIZE as f32)),
-                color: YELLOW,
-                ..Default::default()
-            },
-            ..Default::default()
-        })
-        .insert(Pos::try_new(8, 8).unwrap())
-        .insert(Chest);
+    // commands
+    //     .spawn_bundle(SpriteBundle {
+    //         sprite: Sprite {
+    //             custom_size: Some(Vec2::new(GRID_BLOCK_SIZE as f32, GRID_BLOCK_SIZE as f32)),
+    //             color: YELLOW,
+    //             ..Default::default()
+    //         },
+    //         ..Default::default()
+    //     })
+    //     .insert(Pos::try_new(8, 8).unwrap())
+    //     .insert(Chest);
 
-    commands.spawn_bundle(SpriteBundle {
-        sprite: Sprite {
-            custom_size: Some(Vec2::new(WINDOW_WIDTH as f32, WINDOW_HEIGHT as f32)),
-            color: BLACK,
+    // commands.spawn_bundle(SpriteBundle {
+    //     sprite: Sprite {
+    //         custom_size: Some(Vec2::new(WINDOW_WIDTH as f32, WINDOW_HEIGHT as f32)),
+    //         color: BLACK,
+    //         ..Default::default()
+    //     },
+    //     ..Default::default()
+    // });
+
+    let ldtk_handle = asset_server.load("basic_map.ldtk");
+    commands.spawn_bundle(LdtkWorldBundle {
+        ldtk_handle,
+        transform: Transform {
+            translation: Vec3::new(-(WINDOW_WIDTH / 2) as f32, -(WINDOW_HEIGHT / 2) as f32, 1.),
             ..Default::default()
         },
         ..Default::default()
     });
-
-    // let ldtk_handle = asset_server.load("basic_map.ldtk");
-    // commands.spawn_bundle(LdtkWorldBundle {
-    //     ldtk_handle,
-    //     ..Default::default()
-    // });
 }
 
 fn grid_to_transform(mut query: Query<(&Pos, &mut Transform)>) {
@@ -134,6 +112,13 @@ fn grid_to_transform(mut query: Query<(&Pos, &mut Transform)>) {
             ((pos.y as i32 * GRID_BLOCK_SIZE) - (WINDOW_HEIGHT + GRID_BLOCK_SIZE) / 2) as f32;
         transform.translation.z = 2.;
     });
+}
+
+fn translation_to_grid_pos(translation: Vec3) -> Option<Pos> {
+    let x = (translation.x as i32) / GRID_BLOCK_SIZE + 1;
+    let y = (translation.y as i32) / GRID_BLOCK_SIZE + 1;
+
+    Pos::try_new(x, y)
 }
 
 fn mouse_click_system(
@@ -192,9 +177,9 @@ fn toggle_block(
 /// Pathfinding logic
 /// find shortest path between Start and End
 fn pathfinding(
-    start: Query<&Pos, With<Player>>,
-    end: Query<&Pos, With<Chest>>,
-    blocks: Query<&Pos, With<Wall>>,
+    start: Query<&Transform, With<Player>>,
+    end: Query<&Transform, With<Chest>>,
+    blocks: Query<&Transform, With<Wall>>,
     paths: Query<Entity, With<Path>>,
     mut commands: Commands,
 ) {
@@ -205,10 +190,16 @@ fn pathfinding(
     let start = start.get_single().expect("No start block");
     let end = end.get_single().expect("No end block");
 
-    let blocks = blocks.iter().collect::<Vec<_>>();
+    let start_grid_pos = translation_to_grid_pos(start.translation).unwrap();
+    let end_grid_pos = translation_to_grid_pos(end.translation).unwrap();
+
+    let blocks = blocks
+        .iter()
+        .map(|block| translation_to_grid_pos(block.translation).unwrap())
+        .collect::<Vec<_>>();
 
     let result = bfs(
-        start,
+        &start_grid_pos,
         |p| {
             let &Pos { x, y } = p;
             vec![(x, y - 1), (x, y + 1), (x - 1, y), (x + 1, y)]
@@ -216,7 +207,7 @@ fn pathfinding(
                 .filter_map(|(x, y)| Pos::try_new(x, y))
                 .filter(|pos| blocks.contains(&pos).not())
         },
-        |p| p == end,
+        |p| *p == end_grid_pos,
     );
 
     for entity in paths.iter() {

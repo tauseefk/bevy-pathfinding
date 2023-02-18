@@ -2,11 +2,11 @@ use crate::prelude::*;
 
 #[derive(Clone, Default, Bundle, LdtkEntity)]
 pub struct PlayerBundle {
-    #[sprite_bundle("player.png")]
+    #[sprite_sheet_bundle]
     #[bundle]
-    pub sprite_bundle: SpriteBundle,
+    pub sprite_sheet_bundle: SpriteSheetBundle,
     pub player: Player,
-
+    // pub pos: Pos,
     // The whole EntityInstance can be stored directly as an EntityInstance component
     #[from_entity_instance]
     entity_instance: EntityInstance,
@@ -20,7 +20,8 @@ pub struct Wall;
 
 #[derive(Clone, Debug, Default, Bundle, LdtkIntCell)]
 pub struct WallBundle {
-    wall: Wall,
+    pub wall: Wall,
+    // pub pos: Pos,
 }
 
 #[derive(Clone, Default, Bundle, LdtkEntity)]
@@ -29,7 +30,35 @@ pub struct ChestBundle {
     #[bundle]
     pub sprite_sheet_bundle: SpriteSheetBundle,
     pub chest: Chest,
+    // pub pos: Pos,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
 pub struct Chest;
+
+#[derive(Component, Eq, PartialEq, Copy, Clone, Hash, Debug, Default)]
+pub struct Pos {
+    pub x: i32,
+    pub y: i32,
+}
+
+impl Pos {
+    pub const fn try_new(x: i32, y: i32) -> Option<Self> {
+        if x <= 0 || y <= 0 || x > GRID_SIZE as i32 || y > GRID_SIZE as i32 {
+            None
+        } else {
+            Some(Self {
+                x: x as i32,
+                y: y as i32,
+            })
+        }
+    }
+
+    pub const fn min(self) -> bool {
+        self.x == 1 && self.y == 1
+    }
+
+    pub const fn max(self) -> bool {
+        self.x == GRID_SIZE && self.y == GRID_SIZE
+    }
+}
