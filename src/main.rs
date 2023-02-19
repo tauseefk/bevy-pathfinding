@@ -37,7 +37,7 @@ fn main() {
     let mut app = App::new();
     app.insert_resource(ClearColor(Color::GRAY))
         .insert_resource(WindowDescriptor {
-            title: "Pathfinding".to_string(),
+            title: "Pathfinder".to_string(),
             width: (WINDOW_WIDTH) as f32,
             height: (WINDOW_HEIGHT) as f32,
             resizable: false,
@@ -45,7 +45,8 @@ fn main() {
         })
         // .insert_resource(FrameTimer(Timer::from_seconds(0.045, true)))
         .insert_resource(MovementTimer(Timer::from_seconds(0.1, true)))
-        .add_event::<ToggleBlockEvent>()
+        .add_event::<ToggleWallEvent>()
+        .add_event::<MoveChestEvent>()
         .add_plugins(DefaultPlugins)
         .add_plugin(LdtkPlugin)
         .add_startup_system(setup)
@@ -54,7 +55,8 @@ fn main() {
         .register_ldtk_entity::<components::PlayerBundle>("Player")
         .register_ldtk_entity::<components::ChestBundle>("Chest")
         .add_system(mouse_click_system)
-        .add_system(toggle_block)
+        .add_system(move_chest)
+        .add_system(toggle_wall)
         .add_system(pathfinding)
         .add_system_set(
             SystemSet::new()

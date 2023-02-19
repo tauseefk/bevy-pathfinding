@@ -38,12 +38,23 @@ fn snap_to_grid(translation: Vec3) -> Vec3 {
 pub fn mouse_click_system(
     mouse_button_input: Res<Input<MouseButton>>,
     windows: Res<Windows>,
-    mut my_events: EventWriter<ToggleBlockEvent>,
+    mut toggle_wall: EventWriter<ToggleWallEvent>,
+    mut move_chest: EventWriter<MoveChestEvent>,
 ) {
     if mouse_button_input.just_pressed(MouseButton::Left) {
         if let Some(window) = windows.get_primary() {
             if let Some(cursor_pos) = window.cursor_position() {
-                my_events.send(ToggleBlockEvent {
+                toggle_wall.send(ToggleWallEvent {
+                    translation: snap_to_grid(Vec3::new(cursor_pos.x, cursor_pos.y, 1.)),
+                });
+            }
+        }
+    }
+
+    if mouse_button_input.just_pressed(MouseButton::Right) {
+        if let Some(window) = windows.get_primary() {
+            if let Some(cursor_pos) = window.cursor_position() {
+                move_chest.send(MoveChestEvent {
                     translation: snap_to_grid(Vec3::new(cursor_pos.x, cursor_pos.y, 1.)),
                 });
             }
@@ -51,8 +62,8 @@ pub fn mouse_click_system(
     }
 }
 
-pub fn toggle_block(
-    mut my_events: EventReader<ToggleBlockEvent>,
+pub fn toggle_wall(
+    mut my_events: EventReader<ToggleWallEvent>,
     blocks: Query<(Entity, &Transform), With<Wall>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -68,7 +79,7 @@ pub fn toggle_block(
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
     for event in my_events.iter() {
-        let event: &ToggleBlockEvent = event;
+        let event: &ToggleWallEvent = event;
         match blocks.iter().find(|(_, transform)| {
             translation_to_grid_pos(transform.translation).unwrap()
                 == translation_to_grid_pos(event.translation).unwrap()
@@ -88,6 +99,26 @@ pub fn toggle_block(
             Some((entity, _)) => {
                 commands.entity(entity).despawn_recursive();
             }
+        }
+    }
+}
+
+pub fn move_chest(
+    mut my_events: EventReader<MoveChestEvent>,
+    mut chest_query: Query<&mut Transform, (With<Chest>, Without<Wall>)>,
+    wall_blocks: Query<&Transform, (With<Wall>, Without<Chest>)>,
+) {
+    for event in my_events.iter() {
+        match wall_blocks.iter().find(|transform| {
+            translation_to_grid_pos(transform.translation).unwrap()
+                == translation_to_grid_pos(event.translation).unwrap()
+        }) {
+            None => {
+                let mut chest = chest_query.single_mut();
+                chest.translation.x = event.translation.x;
+                chest.translation.y = event.translation.y;
+            }
+            Some(_) => {}
         }
     }
 }
