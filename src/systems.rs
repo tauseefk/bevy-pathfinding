@@ -151,3 +151,19 @@ pub fn pathfinding(
         }
     }
 }
+
+pub fn path_traversal(
+    time: Res<Time>,
+    mut timer: ResMut<MovementTimer>,
+    mut player_query: Query<&mut Transform, (With<Player>, Without<Path>)>,
+    path_query: Query<&Transform, (With<Path>, Without<Player>)>,
+) {
+    let mut player = player_query.single_mut();
+
+    if let Some(path_block) = path_query.iter().nth(1) {
+        if timer.0.tick(time.delta()).just_finished() {
+            player.translation.x = path_block.translation.x;
+            player.translation.y = path_block.translation.y;
+        }
+    }
+}

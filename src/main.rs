@@ -5,13 +5,19 @@ mod systems;
 mod prelude {
     pub use std::ops::Not;
 
-    pub use bevy::prelude::*;
+    pub use bevy::{prelude::*, time::FixedTimestep};
     pub use bevy_ecs_ldtk::prelude::*;
     pub use pathfinding::prelude::*;
 
     pub use crate::components::*;
     pub use crate::events::*;
     pub use crate::systems::*;
+
+    // TODO: use for animation frames
+    pub struct FrameTimer(pub Timer);
+    pub struct MovementTimer(pub Timer);
+
+    pub const TIME_STEP: f32 = 1.0 / 60.0;
 
     pub const GRID_SIZE: i32 = 8;
     pub const GRID_BLOCK_SIZE: i32 = 32;
@@ -37,6 +43,8 @@ fn main() {
             resizable: false,
             ..Default::default()
         })
+        // .insert_resource(FrameTimer(Timer::from_seconds(0.045, true)))
+        .insert_resource(MovementTimer(Timer::from_seconds(0.1, true)))
         .add_event::<ToggleBlockEvent>()
         .add_plugins(DefaultPlugins)
         .add_plugin(LdtkPlugin)
@@ -48,6 +56,11 @@ fn main() {
         .add_system(mouse_click_system)
         .add_system(toggle_block)
         .add_system(pathfinding)
+        .add_system_set(
+            SystemSet::new()
+                .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
+                .with_system(path_traversal),
+        )
         .add_system(bevy::window::close_on_esc);
 
     app.run();
