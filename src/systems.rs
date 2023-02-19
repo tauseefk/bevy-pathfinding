@@ -126,23 +126,23 @@ pub fn move_chest(
 /// Pathfinding logic
 /// find shortest path between Start and End
 pub fn pathfinding(
-    start: Query<&Transform, With<Player>>,
-    end: Query<&Transform, With<Chest>>,
-    blocks: Query<&Transform, With<Wall>>,
-    paths: Query<Entity, With<Path>>,
+    player: Query<&Transform, With<Player>>,
+    chest: Query<&Transform, With<Chest>>,
+    wall_blocks: Query<&Transform, With<Wall>>,
+    path_blocks: Query<Entity, With<Path>>,
     mut commands: Commands,
 ) {
-    if start.get_single().is_err() || end.get_single().is_err() {
+    if player.get_single().is_err() || chest.get_single().is_err() {
         return;
     }
 
-    let start = start.get_single().expect("No start block");
-    let end = end.get_single().expect("No end block");
+    let player = player.single();
+    let chest = chest.single();
 
-    let start_grid_pos = translation_to_grid_pos(start.translation).unwrap();
-    let end_grid_pos = translation_to_grid_pos(end.translation).unwrap();
+    let start_grid_pos = translation_to_grid_pos(player.translation).unwrap();
+    let end_grid_pos = translation_to_grid_pos(chest.translation).unwrap();
 
-    let blocks = blocks
+    let blocks = wall_blocks
         .iter()
         .map(|block| translation_to_grid_pos(block.translation).unwrap())
         .collect::<Vec<_>>();
@@ -159,7 +159,7 @@ pub fn pathfinding(
         |p| *p == end_grid_pos,
     );
 
-    for entity in paths.iter() {
+    for entity in path_blocks.iter() {
         commands.entity(entity).despawn_recursive();
     }
 
