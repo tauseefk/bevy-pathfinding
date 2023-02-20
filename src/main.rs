@@ -48,7 +48,7 @@ fn main() {
         })
         .insert_resource(FrameTimer(Timer::from_seconds(0.1, true)))
         .insert_resource(MovementTimer(Timer::from_seconds(0.4, true)))
-        .add_event::<ToggleWallEvent>()
+        .add_event::<ToggleWallBlockEvent>()
         .add_event::<CyclePOIEvent>()
         .add_plugins(DefaultPlugins)
         .add_plugin(LdtkPlugin)

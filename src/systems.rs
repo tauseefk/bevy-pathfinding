@@ -38,13 +38,13 @@ fn snap_to_grid(translation: Vec3) -> Vec3 {
 pub fn mouse_click_system(
     mouse_button_input: Res<Input<MouseButton>>,
     windows: Res<Windows>,
-    mut toggle_wall: EventWriter<ToggleWallEvent>,
+    mut toggle_wall: EventWriter<ToggleWallBlockEvent>,
     mut cycle_point_of_interest: EventWriter<CyclePOIEvent>,
 ) {
     if mouse_button_input.just_pressed(MouseButton::Left) {
         if let Some(window) = windows.get_primary() {
             if let Some(cursor_pos) = window.cursor_position() {
-                toggle_wall.send(ToggleWallEvent {
+                toggle_wall.send(ToggleWallBlockEvent {
                     translation: snap_to_grid(Vec3::new(cursor_pos.x, cursor_pos.y, 1.)),
                 });
             }
@@ -56,8 +56,9 @@ pub fn mouse_click_system(
     }
 }
 
+/// Toggle the wall block at the location described in the event
 pub fn toggle_wall(
-    mut my_events: EventReader<ToggleWallEvent>,
+    mut toggle_wall_block: EventReader<ToggleWallBlockEvent>,
     blocks: Query<(Entity, &Transform), With<Wall>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -72,8 +73,8 @@ pub fn toggle_wall(
     );
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
-    for event in my_events.iter() {
-        let event: &ToggleWallEvent = event;
+    for event in toggle_wall_block.iter() {
+        let event: &ToggleWallBlockEvent = event;
         match blocks.iter().find(|(_, transform)| {
             translation_to_grid_pos(transform.translation).unwrap()
                 == translation_to_grid_pos(event.translation).unwrap()
@@ -97,6 +98,7 @@ pub fn toggle_wall(
     }
 }
 
+/// Cycle through points of interest in order
 pub fn cycle_point_of_interest(
     mut my_events: EventReader<CyclePOIEvent>,
     mut poi_query: Query<&mut PointOfInterest, Without<Wall>>,
@@ -124,8 +126,7 @@ pub fn cycle_point_of_interest(
     }
 }
 
-/// Pathfinding logic
-/// find shortest path between Start and End
+/// Find the shortest path between the player's current position and the active point of interest
 pub fn pathfinding(
     player: Query<&Transform, With<Player>>,
     poi_with_transform: Query<(&PointOfInterest, &Transform)>,
