@@ -53,7 +53,7 @@ impl LdtkEntity for ChestBundle {
             .find(|f| f.identifier == *"active")
         {
             Some(active) => {
-                let chest = match active.value {
+                let point_of_interest = match active.value {
                     FieldValue::Bool(active) => PointOfInterest { active },
                     _ => PointOfInterest { active: false },
                 };
@@ -63,7 +63,7 @@ impl LdtkEntity for ChestBundle {
                         texture_atlas: texture_atlas_handle.clone(),
                         ..Default::default()
                     },
-                    point_of_interest: chest,
+                    point_of_interest,
                 }
             }
             None => ChestBundle {

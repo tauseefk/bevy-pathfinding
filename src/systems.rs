@@ -52,11 +52,7 @@ pub fn mouse_click_system(
     }
 
     if mouse_button_input.just_pressed(MouseButton::Right) {
-        if let Some(window) = windows.get_primary() {
-            if let Some(cursor_pos) = window.cursor_position() {
-                cycle_point_of_interest.send(CyclePOIEvent {});
-            }
-        }
+        cycle_point_of_interest.send(CyclePOIEvent {});
     }
 }
 
@@ -106,24 +102,24 @@ pub fn cycle_point_of_interest(
     mut poi_query: Query<&mut PointOfInterest, Without<Wall>>,
 ) {
     for _ in my_events.iter() {
-        let active_idx =
-            poi_query.iter().enumerate().find_map(
-                |(idx, chest)| {
-                    if chest.active {
-                        Some(idx)
-                    } else {
-                        None
-                    }
-                },
-            );
+        let active_idx = poi_query
+            .iter()
+            .enumerate()
+            .find_map(|(idx, point_of_interest)| {
+                if point_of_interest.active {
+                    Some(idx)
+                } else {
+                    None
+                }
+            });
 
         if let Some(active_idx) = active_idx {
-            let mut active_chest = poi_query.iter_mut().nth(active_idx).unwrap();
-            active_chest.active = false;
+            let mut active_poi = poi_query.iter_mut().nth(active_idx).unwrap();
+            active_poi.active = false;
 
             let next_idx = (active_idx + 1) % poi_query.iter().len();
-            let mut next_chest = poi_query.iter_mut().nth(next_idx).unwrap();
-            next_chest.active = true;
+            let mut next_poi = poi_query.iter_mut().nth(next_idx).unwrap();
+            next_poi.active = true;
         }
     }
 }
@@ -132,7 +128,7 @@ pub fn cycle_point_of_interest(
 /// find shortest path between Start and End
 pub fn pathfinding(
     player: Query<&Transform, With<Player>>,
-    chests_with_transform: Query<(&Transform, &PointOfInterest)>,
+    poi_with_transform: Query<(&PointOfInterest, &Transform)>,
     wall_blocks: Query<&Transform, With<Wall>>,
     path_blocks: Query<Entity, With<Path>>,
     mut commands: Commands,
@@ -142,13 +138,13 @@ pub fn pathfinding(
     }
 
     let player = player.single();
-    let chest = chests_with_transform.iter().find(|(_, chest)| chest.active);
+    let chest = poi_with_transform.iter().find(|(chest, _)| chest.active);
 
     if chest.is_none() {
         return;
     }
 
-    let (c_transform, _) = chest.unwrap();
+    let (_, c_transform) = chest.unwrap();
 
     let start_grid_pos = translation_to_grid_pos(player.translation).unwrap();
     let end_grid_pos = translation_to_grid_pos(c_transform.translation).unwrap();
