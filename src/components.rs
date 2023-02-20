@@ -27,7 +27,7 @@ pub struct WallBundle {
 pub struct ChestBundle {
     #[bundle]
     pub sprite_sheet_bundle: SpriteSheetBundle,
-    pub chest: Chest,
+    pub point_of_interest: PointOfInterest,
 }
 
 // As we're using instance field `active` to determine the first active point of interest
@@ -54,8 +54,8 @@ impl LdtkEntity for ChestBundle {
         {
             Some(active) => {
                 let chest = match active.value {
-                    FieldValue::Bool(active) => Chest { active },
-                    _ => Chest { active: false },
+                    FieldValue::Bool(active) => PointOfInterest { active },
+                    _ => PointOfInterest { active: false },
                 };
 
                 ChestBundle {
@@ -63,7 +63,7 @@ impl LdtkEntity for ChestBundle {
                         texture_atlas: texture_atlas_handle.clone(),
                         ..Default::default()
                     },
-                    chest,
+                    point_of_interest: chest,
                 }
             }
             None => ChestBundle {
@@ -71,14 +71,14 @@ impl LdtkEntity for ChestBundle {
                     texture_atlas: texture_atlas_handle.clone(),
                     ..Default::default()
                 },
-                chest: Chest { active: false },
+                point_of_interest: PointOfInterest { active: false },
             },
         }
     }
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
-pub struct Chest {
+pub struct PointOfInterest {
     pub active: bool,
 }
 

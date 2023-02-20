@@ -39,7 +39,7 @@ pub fn mouse_click_system(
     mouse_button_input: Res<Input<MouseButton>>,
     windows: Res<Windows>,
     mut toggle_wall: EventWriter<ToggleWallEvent>,
-    mut move_chest: EventWriter<MoveChestEvent>,
+    mut cycle_point_of_interest: EventWriter<CyclePOIEvent>,
 ) {
     if mouse_button_input.just_pressed(MouseButton::Left) {
         if let Some(window) = windows.get_primary() {
@@ -54,9 +54,7 @@ pub fn mouse_click_system(
     if mouse_button_input.just_pressed(MouseButton::Right) {
         if let Some(window) = windows.get_primary() {
             if let Some(cursor_pos) = window.cursor_position() {
-                move_chest.send(MoveChestEvent {
-                    translation: snap_to_grid(Vec3::new(cursor_pos.x, cursor_pos.y, 1.)),
-                });
+                cycle_point_of_interest.send(CyclePOIEvent {});
             }
         }
     }
@@ -103,35 +101,29 @@ pub fn toggle_wall(
     }
 }
 
-pub fn move_chest(
-    mut my_events: EventReader<MoveChestEvent>,
-    mut chest_query: Query<&mut Chest, Without<Wall>>,
-    wall_blocks: Query<&Transform, (With<Wall>, Without<Chest>)>,
+pub fn cycle_point_of_interest(
+    mut my_events: EventReader<CyclePOIEvent>,
+    mut poi_query: Query<&mut PointOfInterest, Without<Wall>>,
 ) {
-    for event in my_events.iter() {
-        match wall_blocks.iter().find(|transform| {
-            translation_to_grid_pos(transform.translation).unwrap()
-                == translation_to_grid_pos(event.translation).unwrap()
-        }) {
-            None => {
-                let active_idx = chest_query.iter().enumerate().find_map(|(idx, chest)| {
+    for _ in my_events.iter() {
+        let active_idx =
+            poi_query.iter().enumerate().find_map(
+                |(idx, chest)| {
                     if chest.active {
                         Some(idx)
                     } else {
                         None
                     }
-                });
+                },
+            );
 
-                if let Some(active_idx) = active_idx {
-                    let mut active_chest = chest_query.iter_mut().nth(active_idx).unwrap();
-                    active_chest.active = false;
+        if let Some(active_idx) = active_idx {
+            let mut active_chest = poi_query.iter_mut().nth(active_idx).unwrap();
+            active_chest.active = false;
 
-                    let next_idx = (active_idx + 1) % chest_query.iter().len();
-                    let mut next_chest = chest_query.iter_mut().nth(next_idx).unwrap();
-                    next_chest.active = true;
-                }
-            }
-            Some(_) => {}
+            let next_idx = (active_idx + 1) % poi_query.iter().len();
+            let mut next_chest = poi_query.iter_mut().nth(next_idx).unwrap();
+            next_chest.active = true;
         }
     }
 }
@@ -140,7 +132,7 @@ pub fn move_chest(
 /// find shortest path between Start and End
 pub fn pathfinding(
     player: Query<&Transform, With<Player>>,
-    chests_with_transform: Query<(&Transform, &Chest)>,
+    chests_with_transform: Query<(&Transform, &PointOfInterest)>,
     wall_blocks: Query<&Transform, With<Wall>>,
     path_blocks: Query<Entity, With<Path>>,
     mut commands: Commands,
