@@ -10,7 +10,7 @@
 	},
 	"jsonVersion": "1.1.3",
 	"appBuildId": 458364,
-	"nextUid": 14,
+	"nextUid": 15,
 	"identifierStyle": "Capitalize",
 	"worldLayout": "Free",
 	"worldGridWidth": 256,
@@ -178,7 +178,37 @@
 			"limitBehavior": "MoveLastOne",
 			"pivotX": 0,
 			"pivotY": 0,
-			"fieldDefs": []
+			"fieldDefs": [
+				{
+					"identifier": "active",
+					"__type": "Bool",
+					"uid": 14,
+					"type": "F_Bool",
+					"isArray": false,
+					"canBeNull": false,
+					"arrayMinLength": null,
+					"arrayMaxLength": null,
+					"editorDisplayMode": "ValueOnly",
+					"editorDisplayPos": "Above",
+					"editorAlwaysShow": false,
+					"editorCutLongValues": true,
+					"editorTextSuffix": null,
+					"editorTextPrefix": null,
+					"useForSmartColor": false,
+					"min": null,
+					"max": null,
+					"regex": null,
+					"acceptFileTypes": null,
+					"defaultOverride": null,
+					"textLanguageMode": null,
+					"symmetricalRef": false,
+					"autoChainRef": true,
+					"allowOutOfLevelRef": true,
+					"allowedRefs": "OnlySame",
+					"allowedRefTags": [],
+					"tilesetUid": null
+				}
+			]
 		}
 	], "tilesets": [
 		{
@@ -280,7 +310,38 @@
 							"height": 32,
 							"defUid": 5,
 							"px": [0,224],
-							"fieldInstances": []
+							"fieldInstances": [{ "__identifier": "active", "__value": false, "__type": "Bool", "__tile": null, "defUid": 14, "realEditorValues": [] }]
+						},
+						{
+							"__identifier": "Chest",
+							"__grid": [1,0],
+							"__pivot": [0,0],
+							"__tags": [],
+							"__tile": { "tilesetUid": 6, "x": 384, "y": 224, "w": 32, "h": 32 },
+							"__smartColor": "#4C55D5",
+							"iid": "2d403930-9f30-11ed-b684-27c81c05034b",
+							"width": 32,
+							"height": 32,
+							"defUid": 5,
+							"px": [32,0],
+							"fieldInstances": [{ "__identifier": "active", "__value": true, "__type": "Bool", "__tile": null, "defUid": 14, "realEditorValues": [{
+								"id": "V_Bool",
+								"params": [ true ]
+							}] }]
+						},
+						{
+							"__identifier": "Chest",
+							"__grid": [6,6],
+							"__pivot": [0,0],
+							"__tags": [],
+							"__tile": { "tilesetUid": 6, "x": 384, "y": 224, "w": 32, "h": 32 },
+							"__smartColor": "#4C55D5",
+							"iid": "2e3bd740-9f30-11ed-b684-9ffdde6397fe",
+							"width": 32,
+							"height": 32,
+							"defUid": 5,
+							"px": [192,192],
+							"fieldInstances": [{ "__identifier": "active", "__value": false, "__type": "Bool", "__tile": null, "defUid": 14, "realEditorValues": [] }]
 						}
 					]
 				},
@@ -304,7 +365,7 @@
 					"optionalRules": [],
 					"intGridCsv": [
 						0,
-						0,
+						3,
 						0,
 						1,
 						0,

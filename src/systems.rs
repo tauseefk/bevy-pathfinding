@@ -105,7 +105,7 @@ pub fn toggle_wall(
 
 pub fn move_chest(
     mut my_events: EventReader<MoveChestEvent>,
-    mut chest_query: Query<&mut Transform, (With<Chest>, Without<Wall>)>,
+    mut chest_query: Query<&mut Chest, Without<Wall>>,
     wall_blocks: Query<&Transform, (With<Wall>, Without<Chest>)>,
 ) {
     for event in my_events.iter() {
@@ -114,9 +114,22 @@ pub fn move_chest(
                 == translation_to_grid_pos(event.translation).unwrap()
         }) {
             None => {
-                let mut chest = chest_query.single_mut();
-                chest.translation.x = event.translation.x;
-                chest.translation.y = event.translation.y;
+                let active_idx = chest_query.iter().enumerate().find_map(|(idx, chest)| {
+                    if chest.active {
+                        Some(idx)
+                    } else {
+                        None
+                    }
+                });
+
+                if let Some(active_idx) = active_idx {
+                    let mut active_chest = chest_query.iter_mut().nth(active_idx).unwrap();
+                    active_chest.active = false;
+
+                    let next_idx = (active_idx + 1) % chest_query.iter().len();
+                    let mut next_chest = chest_query.iter_mut().nth(next_idx).unwrap();
+                    next_chest.active = true;
+                }
             }
             Some(_) => {}
         }
@@ -127,20 +140,26 @@ pub fn move_chest(
 /// find shortest path between Start and End
 pub fn pathfinding(
     player: Query<&Transform, With<Player>>,
-    chest: Query<&Transform, With<Chest>>,
+    chests_with_transform: Query<(&Transform, &Chest)>,
     wall_blocks: Query<&Transform, With<Wall>>,
     path_blocks: Query<Entity, With<Path>>,
     mut commands: Commands,
 ) {
-    if player.get_single().is_err() || chest.get_single().is_err() {
+    if player.get_single().is_err() {
         return;
     }
 
     let player = player.single();
-    let chest = chest.single();
+    let chest = chests_with_transform.iter().find(|(_, chest)| chest.active);
+
+    if chest.is_none() {
+        return;
+    }
+
+    let (c_transform, _) = chest.unwrap();
 
     let start_grid_pos = translation_to_grid_pos(player.translation).unwrap();
-    let end_grid_pos = translation_to_grid_pos(chest.translation).unwrap();
+    let end_grid_pos = translation_to_grid_pos(c_transform.translation).unwrap();
 
     let blocks = wall_blocks
         .iter()

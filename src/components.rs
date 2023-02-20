@@ -22,16 +22,64 @@ pub struct WallBundle {
     pub wall: Wall,
 }
 
-#[derive(Clone, Default, Bundle, LdtkEntity)]
+#[derive(Clone, Default, Bundle)]
 pub struct ChestBundle {
-    #[sprite_sheet_bundle]
     #[bundle]
     pub sprite_sheet_bundle: SpriteSheetBundle,
     pub chest: Chest,
 }
 
+// As we're using instance field `active` to determine the first active point of interest
+// we need to implement LdtkEntity by hand.
+// TODO: Just using macros was a lot easier, I wonder if there's a way to still map fields using macros
+impl LdtkEntity for ChestBundle {
+    fn bundle_entity(
+        entity_instance: &EntityInstance,
+        _: &LayerInstance,
+        _: Option<&Handle<Image>>,
+        _: Option<&TilesetDefinition>,
+        asset_server: &AssetServer,
+        texture_atlases: &mut Assets<TextureAtlas>,
+    ) -> ChestBundle {
+        let texture_handle = asset_server.load("chest.PNG");
+        let texture_atlas =
+            TextureAtlas::from_grid(texture_handle, Vec2::splat(GRID_BLOCK_SIZE as f32), 1, 1);
+        let texture_atlas_handle = texture_atlases.add(texture_atlas);
+
+        match entity_instance
+            .field_instances
+            .iter()
+            .find(|f| f.identifier == *"active")
+        {
+            Some(active) => {
+                let chest = match active.value {
+                    FieldValue::Bool(active) => Chest { active },
+                    _ => Chest { active: false },
+                };
+
+                ChestBundle {
+                    sprite_sheet_bundle: SpriteSheetBundle {
+                        texture_atlas: texture_atlas_handle.clone(),
+                        ..Default::default()
+                    },
+                    chest,
+                }
+            }
+            None => ChestBundle {
+                sprite_sheet_bundle: SpriteSheetBundle {
+                    texture_atlas: texture_atlas_handle.clone(),
+                    ..Default::default()
+                },
+                chest: Chest { active: false },
+            },
+        }
+    }
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
-pub struct Chest;
+pub struct Chest {
+    pub active: bool,
+}
 
 #[derive(Component, Eq, PartialEq, Copy, Clone, Hash, Debug, Default)]
 pub struct GridPosition {
