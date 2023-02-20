@@ -57,7 +57,7 @@ fn main() {
         .register_ldtk_int_cell::<components::WallBundle>(1)
         .register_ldtk_entity::<components::PlayerBundle>("Player")
         .register_ldtk_entity::<components::ChestBundle>("Chest")
-        .add_system(mouse_click_system)
+        .add_system(mouse_click)
         .add_system(cycle_point_of_interest)
         .add_system(toggle_wall)
         .add_system(pathfinding)
