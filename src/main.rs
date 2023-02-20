@@ -46,8 +46,8 @@ fn main() {
             resizable: false,
             ..Default::default()
         })
-        .insert_resource(FrameTimer(Timer::from_seconds(0.2, true)))
-        .insert_resource(MovementTimer(Timer::from_seconds(0.1, true)))
+        .insert_resource(FrameTimer(Timer::from_seconds(0.1, true)))
+        .insert_resource(MovementTimer(Timer::from_seconds(0.4, true)))
         .add_event::<ToggleWallEvent>()
         .add_event::<MoveChestEvent>()
         .add_plugins(DefaultPlugins)

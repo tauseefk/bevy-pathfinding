@@ -11,7 +11,7 @@ impl AnimationLoop for PlayerAnimationVariant {
     fn page(&self) -> (usize, usize) {
         match self {
             PlayerAnimationVariant::Idle => (8, 4),
-            PlayerAnimationVariant::Walking => (24, 8),
+            PlayerAnimationVariant::Walking => (16, 4),
         }
     }
 }
