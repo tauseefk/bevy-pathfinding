@@ -1,16 +1,19 @@
 mod components;
 mod events;
+mod player_animation;
 mod systems;
 
 mod prelude {
     pub use std::ops::Not;
 
+    pub use animation_transition::*;
     pub use bevy::{prelude::*, time::FixedTimestep};
     pub use bevy_ecs_ldtk::prelude::*;
     pub use pathfinding::prelude::*;
 
     pub use crate::components::*;
     pub use crate::events::*;
+    pub use crate::player_animation::*;
     pub use crate::systems::*;
 
     // TODO: use for animation frames
@@ -43,7 +46,7 @@ fn main() {
             resizable: false,
             ..Default::default()
         })
-        // .insert_resource(FrameTimer(Timer::from_seconds(0.045, true)))
+        .insert_resource(FrameTimer(Timer::from_seconds(0.2, true)))
         .insert_resource(MovementTimer(Timer::from_seconds(0.1, true)))
         .add_event::<ToggleWallEvent>()
         .add_event::<MoveChestEvent>()
@@ -61,7 +64,8 @@ fn main() {
         .add_system_set(
             SystemSet::new()
                 .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
-                .with_system(path_traversal),
+                .with_system(path_traversal)
+                .with_system(animate_player),
         )
         .add_system(bevy::window::close_on_esc);
 

@@ -207,13 +207,41 @@ pub fn path_traversal(
     mut timer: ResMut<MovementTimer>,
     mut player_query: Query<&mut Transform, (With<Player>, Without<Path>)>,
     path_query: Query<&Transform, (With<Path>, Without<Player>)>,
+    mut animation_state: Query<&mut PlayerAnimationState, With<Player>>,
 ) {
     let mut player = player_query.single_mut();
+    let mut player_animation_state = animation_state.single_mut();
+    match path_query.iter().nth(1) {
+        Some(path_block) => {
+            if timer.0.tick(time.delta()).just_finished() {
+                player.translation.x = path_block.translation.x;
+                player.translation.y = path_block.translation.y;
+            }
 
-    if let Some(path_block) = path_query.iter().nth(1) {
-        if timer.0.tick(time.delta()).just_finished() {
-            player.translation.x = path_block.translation.x;
-            player.translation.y = path_block.translation.y;
+            if player_animation_state.variant != PlayerAnimationVariant::Walking {
+                player_animation_state.transition_variant(PlayerAnimationVariant::Walking);
+            }
         }
+        None => {
+            if player_animation_state.variant != PlayerAnimationVariant::Idle {
+                player_animation_state.transition_variant(PlayerAnimationVariant::Idle);
+            }
+        }
+    }
+}
+
+pub fn animate_player(
+    time: Res<Time>,
+    mut frame_timer: ResMut<FrameTimer>,
+    mut animation_state_with_texture_query: Query<
+        (&mut PlayerAnimationState, &mut TextureAtlasSprite),
+        With<Player>,
+    >,
+) {
+    let (mut animation_state, mut texture_sprite) = animation_state_with_texture_query.single_mut();
+
+    frame_timer.0.tick(time.delta());
+    if frame_timer.0.finished() {
+        texture_sprite.index = animation_state.wrapping_next_idx();
     }
 }

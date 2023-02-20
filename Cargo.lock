@@ -94,6 +94,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "animation_transition"
+version = "0.1.0"
+dependencies = [
+ "animation_transition_derive",
+]
+
+[[package]]
+name = "animation_transition_derive"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "ansi_term"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -560,6 +575,7 @@ dependencies = [
 name = "bevy_pathfinding"
 version = "0.1.0"
 dependencies = [
+ "animation_transition",
  "bevy",
  "bevy_ecs_ldtk",
  "pathfinding",

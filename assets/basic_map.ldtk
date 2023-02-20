@@ -10,7 +10,7 @@
 	},
 	"jsonVersion": "1.1.3",
 	"appBuildId": 458364,
-	"nextUid": 15,
+	"nextUid": 17,
 	"identifierStyle": "Capitalize",
 	"worldLayout": "Free",
 	"worldGridWidth": 256,
@@ -140,10 +140,10 @@
 			"color": "#FEDF03",
 			"renderMode": "Tile",
 			"showName": true,
-			"tilesetId": 6,
-			"tileId": 64,
+			"tilesetId": 15,
+			"tileId": 8,
 			"tileRenderMode": "FitInside",
-			"tileRect": { "tilesetUid": 6, "x": 0, "y": 128, "w": 32, "h": 32 },
+			"tileRect": { "tilesetUid": 15, "x": 0, "y": 32, "w": 32, "h": 32 },
 			"nineSliceBorders": [],
 			"maxCount": 1,
 			"limitScope": "PerWorld",
@@ -232,6 +232,28 @@
 				"opaqueTiles": "0000000000000000000000000000000000110000000000100000000000010010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
 				"averageColors": "00004fff8fff6fff5fff5fff5fff3fffcfff4fffcfff4fff4fff4fff5fff4fff5fff5fff2fff4fff5fff5fff3fff3fff2fff2fff2fff2fff1fff2fff5fff5fff00003c99f774f5474fff3fff4fff1fff2fff2fff3fff2fff1fff1ffff55559985fff3fff4fff4fff4fff4fff4fff4fff5fff4fff1ffff8752fff2ffff6662fff64565fff5fff4fff4fffb9654fff4fff5fff2fff3fff4fff3fff5fff5fffb7654fff5fff5fff38883fff5fff4fff4fff4fff3fff4fff3fff2fff3fff1fff2fff1fff3fff4fff2fff4fff2fff3fff85644fff2fff3fff4fff2fff3fff3fff86543fff3fff2fff28772fff3fff2fff3fff2fff3fff3fff7da877682fff2fff3fff3fff4fff3fff4fff4fff3fff4fff3fff3fff3fff3fff3fff2fff2fff4fff5fff5fff4fff5fff4fff4fff4fff4fff4fff4fff5fff5fff2fff4fff3fff4fff3fff3fff2fff4fff4fff4fff5fff3fff2fff2fff2fff2fff3fff4fff2fff2fff2fff4fff7fffbfff3fff3fff4fff4fff5fff5fff3fff4fff2fff2fff5fff5fff1fff1fff3fff3fff3fff2fff4fff4fff4fff2fff2fff3fff3fff3fff4fff5fff4fff4fff5fff4fff5fff5fff5fff5fff5fff5fff2fff2fffffff7fff7fff7fff7fff4fff4fff3fff5fff4fff3fff3fff2fff4fff5fff5fff4fff3fff4fff4fff3fff3fff3fff2fff2fff2fff2fff2fff4fff2fff1fff0fff3fff2fff2fff3fff0000"
 			}
+		},
+		{
+			"__cWid": 8,
+			"__cHei": 9,
+			"identifier": "Player_animations",
+			"uid": 15,
+			"relPath": "player_animations.png",
+			"embedAtlas": null,
+			"pxWid": 256,
+			"pxHei": 288,
+			"tileGridSize": 32,
+			"spacing": 0,
+			"padding": 0,
+			"tags": [],
+			"tagsSourceEnumUid": null,
+			"enumTags": [],
+			"customData": [],
+			"savedSelections": [],
+			"cachedPixelData": {
+				"opaqueTiles": "000000000000000000000000000000000000000000000000000000000000000000000000",
+				"averageColors": "572357230000000000000000000000005723572357225712000000000000000057235723572357230000000000000000472347235723572347234723572357235723572357224712572357230000000057235722572357235723472347235723572337221612000000000000000000005723572347234622471248123812381257235723574458556a88585557335723"
+			}
 		}
 	], "enums": [
 		{ "identifier": "Player", "uid": 9, "values": [], "iconTilesetUid": 6, "externalRelPath": null, "externalFileChecksum": null, "tags": [] },
@@ -289,7 +311,7 @@
 							"__grid": [7,0],
 							"__pivot": [0,0],
 							"__tags": [],
-							"__tile": { "tilesetUid": 6, "x": 0, "y": 128, "w": 32, "h": 32 },
+							"__tile": { "tilesetUid": 15, "x": 0, "y": 32, "w": 32, "h": 32 },
 							"__smartColor": "#FEDF03",
 							"iid": "d98f22e0-9f30-11ed-b684-d76766f684c4",
 							"width": 32,

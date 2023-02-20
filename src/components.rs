@@ -6,6 +6,7 @@ pub struct PlayerBundle {
     #[bundle]
     pub sprite_sheet_bundle: SpriteSheetBundle,
     pub player: Player,
+    pub animation_state: PlayerAnimationState,
     // The whole EntityInstance can be stored directly as an EntityInstance component
     #[from_entity_instance]
     entity_instance: EntityInstance,
