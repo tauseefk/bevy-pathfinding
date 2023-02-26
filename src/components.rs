@@ -111,3 +111,8 @@ impl GridPosition {
 
 #[derive(Component)]
 pub struct Path;
+
+#[derive(Component)]
+pub struct PlaySpeed {
+    pub multiplier: f32,
+}

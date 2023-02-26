@@ -18,6 +18,7 @@ mod prelude {
 
     // TODO: use for animation frames
     pub struct FrameTimer(pub Timer);
+    pub struct CycleTimer(pub Timer);
     pub struct MovementTimer(pub Timer);
 
     pub const TIME_STEP: f32 = 1.0 / 60.0;
@@ -47,6 +48,7 @@ fn main() {
             ..Default::default()
         })
         .insert_resource(FrameTimer(Timer::from_seconds(0.1, true)))
+        .insert_resource(CycleTimer(Timer::from_seconds(8.0, true)))
         .insert_resource(MovementTimer(Timer::from_seconds(0.4, true)))
         .add_event::<ToggleWallBlockEvent>()
         .add_event::<CyclePOIEvent>()
@@ -57,6 +59,7 @@ fn main() {
         .register_ldtk_int_cell::<components::WallBundle>(1)
         .register_ldtk_entity::<components::PlayerBundle>("Player")
         .register_ldtk_entity::<components::ChestBundle>("Chest")
+        // .add_system(play_speed)
         .add_system(mouse_click)
         .add_system(cycle_point_of_interest)
         .add_system(toggle_wall)

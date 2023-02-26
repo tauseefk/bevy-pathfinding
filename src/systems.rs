@@ -105,10 +105,35 @@ pub fn toggle_wall(
 
 /// Cycle through points of interest in order
 pub fn cycle_point_of_interest(
+    time: Res<Time>,
+    mut cycle_timer: ResMut<CycleTimer>,
     mut my_events: EventReader<CyclePOIEvent>,
     mut poi_query: Query<&mut PointOfInterest, Without<Wall>>,
 ) {
     for _ in my_events.iter() {
+        let active_idx = poi_query
+            .iter()
+            .enumerate()
+            .find_map(|(idx, point_of_interest)| {
+                if point_of_interest.active {
+                    Some(idx)
+                } else {
+                    None
+                }
+            });
+
+        if let Some(active_idx) = active_idx {
+            let mut active_poi = poi_query.iter_mut().nth(active_idx).unwrap();
+            active_poi.active = false;
+
+            let next_idx = (active_idx + 1) % poi_query.iter().len();
+            let mut next_poi = poi_query.iter_mut().nth(next_idx).unwrap();
+            next_poi.active = true;
+        }
+    }
+
+    cycle_timer.0.tick(time.delta());
+    if cycle_timer.0.finished() {
         let active_idx = poi_query
             .iter()
             .enumerate()
@@ -237,5 +262,19 @@ pub fn animate_player(
     frame_timer.0.tick(time.delta());
     if frame_timer.0.finished() {
         texture_sprite.index = animation_state.wrapping_next_idx();
+    }
+}
+
+pub fn play_speed(
+    keyboard_input: Res<Input<KeyCode>>,
+    mut play_speed_query: Query<&mut PlaySpeed>,
+) {
+    let mut play_speed = play_speed_query.single_mut();
+
+    if keyboard_input.pressed(KeyCode::P) {
+        play_speed.multiplier = 2.0;
+    }
+    if keyboard_input.pressed(KeyCode::O) {
+        play_speed.multiplier = 1.0;
     }
 }
