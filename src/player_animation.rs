@@ -10,8 +10,8 @@ pub enum PlayerAnimationVariant {
 impl AnimationLoop for PlayerAnimationVariant {
     fn page(&self) -> (usize, usize) {
         match self {
-            PlayerAnimationVariant::Idle => (8, 4),
-            PlayerAnimationVariant::Walking => (16, 4),
+            PlayerAnimationVariant::Idle => (0, 6),
+            PlayerAnimationVariant::Walking => (24, 6),
         }
     }
 }

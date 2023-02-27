@@ -172,6 +172,7 @@ pub fn pathfinding(
     let chest = poi_with_transform.iter().find(|(chest, _)| chest.active);
 
     if chest.is_none() {
+        println!("No points of interest found");
         return;
     }
 
