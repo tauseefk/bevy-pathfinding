@@ -1,7 +1,7 @@
 [package]
 name = "bevy_pathfinding"
 version = "0.1.0"
-authors = ["RichoDemus <git@richodemus.com>"]
+authors = ["Tauseefk <tauseef25@gmail.com>", "RichoDemus <git@richodemus.com>"]
 edition = "2021"
 
 [dependencies]
