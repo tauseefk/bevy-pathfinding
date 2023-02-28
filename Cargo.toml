@@ -1,5 +1,5 @@
 [package]
-name = "bevy_pathfinding"
+name = "Tedium"
 version = "0.1.0"
 authors = ["Tauseefk <tauseef25@gmail.com>", "RichoDemus <git@richodemus.com>"]
 edition = "2021"
