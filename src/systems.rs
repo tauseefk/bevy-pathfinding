@@ -224,7 +224,7 @@ pub fn pathfinding(
 
 pub fn path_traversal(
     time: Res<Time>,
-    mut timer: ResMut<MovementTimer>,
+    mut movement_timer: ResMut<MovementTimer>,
     mut player_query: Query<&mut Transform, (With<Player>, Without<Path>)>,
     path_query: Query<&Transform, (With<Path>, Without<Player>)>,
     mut animation_state: Query<&mut PlayerAnimationState, With<Player>>,
@@ -233,13 +233,30 @@ pub fn path_traversal(
     let mut player_animation_state = animation_state.single_mut();
     match path_query.iter().nth(1) {
         Some(path_block) => {
-            if timer.0.tick(time.delta()).just_finished() {
-                player.translation.x = path_block.translation.x;
-                player.translation.y = path_block.translation.y;
+            let current_grid_position = translation_to_grid_pos(player.translation).unwrap();
+            let next_grid_position = translation_to_grid_pos(path_block.translation).unwrap();
+
+            let next_animation_variant = match (
+                next_grid_position.x - current_grid_position.x,
+                next_grid_position.y - current_grid_position.y,
+            ) {
+                (-1, 0) => PlayerAnimationVariant::WalkLeft,
+                (1, 0) => PlayerAnimationVariant::WalkRight,
+                (0, 1) => PlayerAnimationVariant::WalkUp,
+                (0, -1) => PlayerAnimationVariant::WalkDown,
+                _ => player_animation_state.variant,
+            };
+            if next_animation_variant == PlayerAnimationVariant::WalkRight {
+                player.scale.x = player.scale.x.abs();
+            } else if next_animation_variant == PlayerAnimationVariant::WalkLeft {
+                player.scale.x = -1.0 * player.scale.x.abs();
             }
 
-            if player_animation_state.variant != PlayerAnimationVariant::Walking {
-                player_animation_state.transition_variant(PlayerAnimationVariant::Walking);
+            player_animation_state.transition_variant(next_animation_variant);
+
+            if movement_timer.0.tick(time.delta()).just_finished() {
+                player.translation.x = path_block.translation.x;
+                player.translation.y = path_block.translation.y;
             }
         }
         None => {

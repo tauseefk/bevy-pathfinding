@@ -1,17 +1,22 @@
 pub use crate::prelude::*;
 
-#[derive(Default, Clone, PartialEq, Debug)]
+#[derive(Default, Copy, Clone, PartialEq, Debug)]
 pub enum PlayerAnimationVariant {
     #[default]
     Idle,
-    Walking,
+    WalkRight,
+    WalkLeft,
+    WalkDown,
+    WalkUp,
 }
 
 impl AnimationLoop for PlayerAnimationVariant {
     fn page(&self) -> (usize, usize) {
         match self {
             PlayerAnimationVariant::Idle => (0, 6),
-            PlayerAnimationVariant::Walking => (24, 6),
+            PlayerAnimationVariant::WalkRight | PlayerAnimationVariant::WalkLeft => (24, 6),
+            PlayerAnimationVariant::WalkDown => (18, 6),
+            PlayerAnimationVariant::WalkUp => (30, 6),
         }
     }
 }
